@@ -1,0 +1,8 @@
+# Raw scraping HTML dumps
+data-pipeline/*.html
+
+# OS and Cache files
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
