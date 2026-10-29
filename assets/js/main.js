@@ -165,7 +165,11 @@ function rowHtml(p) {
   <div class="row ${open ? 'open' : ''}" data-id="${p.id}">
     <div class="row-main" data-toggle="${p.id}">
       <input type="checkbox" class="cmp" data-cmp="${p.id}" ${cmp ? 'checked' : ''} aria-label="Compare ${escapeHtml(p.name)}">
-      <div class="nm"><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.formula || '—')}</small></div>
+      <div class="nm">
+        <b>${escapeHtml(p.name)}</b>
+        <small>${escapeHtml(p.formula || '—')}</small>
+        <span class="m-cas">CAS ${escapeHtml(p.cas || 'N/A')} · ${escapeHtml(p.purity || 'Commercial')}</span>
+      </div>
       <div class="cell hide-m"><small>CAS</small><span class="cas" data-cas="${escapeHtml(p.cas)}">${escapeHtml(p.cas || 'N/A')}</span></div>
       <div class="cell hide-m"><small>Purity</small>${escapeHtml(p.purity || 'Commercial')}</div>
       <div class="cell hide-m"><small>Division</small>${escapeHtml(p.primaryCategory.replace(' Process', ''))}</div>
@@ -200,7 +204,7 @@ function tileHtml(p) {
       <div><small>Purity</small>${escapeHtml(p.purity || 'Commercial')}</div>
     </div>
     <p class="app">${escapeHtml(p.application || '')}</p>
-    <div class="foot">
+    <div class="tfoot">
       <label style="display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--muted)"><input type="checkbox" class="cmp" data-cmp="${p.id}" ${AppState.compare.includes(p.id) ? 'checked' : ''}> Compare</label>
       <button class="btn btn-sm ${inRfq(p.id) ? 'btn-dark' : 'btn-primary'}" data-rfq="${p.id}">${inRfq(p.id) ? 'Added ✓' : '+ Quote'}</button>
     </div>
