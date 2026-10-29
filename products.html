@@ -1,393 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chemical Master Ledger (85+) | Bhagwati Chemicals</title>
-  <meta name="description" content="Technical specification ledger and procurement directory for 85+ industrial chemicals manufactured and supplied by Bhagwati Chemicals. Compare CAS numbers, formulas, GLC purities, and request commercial quotations.">
-  
+  <title>Products | Bhagwati Chemicals</title>
+  <meta name="description"
+    content="Browse 85+ industrial chemicals with CAS number, purity, packaging and applications. Filter by division, compare, and request a quote.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
 
-  <!-- Top Corporate Status Bar -->
-  <div class="top-alliance-bar">
-    <div class="container">
-      <div class="alliance-pill">
-        <span class="badge">ESTABLISHED 1985</span>
-        <span>Bhagwati Chemicals &bull; Industrial Chemical Manufacturer &amp; Global Supplier</span>
+<body data-page="products">
+  <div class="progress"></div>
+  <div id="site-header"></div>
+
+  <main>
+    <section class="phead">
+      <div class="hero-lattice"></div>
+      <div class="wrap">
+        <div class="crumbs"><a href="index.html">Home</a> / Products</div>
+        <h1 data-reveal>Product catalogue</h1>
+        <p data-reveal style="--d:.08s">Filter by division, open any row for full specifications, tick up to three
+          products to compare, and add what you need to your quote list.</p>
       </div>
-      <div class="top-quick-contacts">
-        <a href="tel:+919428001153">+91 9428001153</a>
-        <a href="mailto:info@bhagwatichemicals.in">info@bhagwatichemicals.in</a>
-        <span style="color: rgba(255,255,255,0.2);">|</span>
-        <span style="font-size: 0.76rem; color: #94a3b8;">ISO 9001:2015 Certified</span>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Main Corporate Header -->
-  <header class="site-header">
-    <div class="container">
-      <div class="brand-alliance">
-        <a href="index.html" class="brand-primary" title="Bhagwati Chemicals Homepage">
-          <img src="assets/images/bhagwati_logo.webp" alt="Bhagwati Chemicals Logo" class="brand-logo-img">
-          <div class="brand-text-block">
-            <span class="brand-title">BHAGWATI CHEMICALS</span>
-            <span class="brand-subtitle">Industrial Chemicals &bull; Est. 1985</span>
-          </div>
-        </a>
-      </div>
-
-      <nav class="main-nav" id="mainNav">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="products.html" class="nav-link active">Chemical Catalog (85+)</a>
-        <a href="about.html" class="nav-link">About Us</a>
-        <a href="infrastructure.html" class="nav-link">Manufacturing Plants</a>
-        <a href="inquiry.html" class="nav-link">Request Quote (RFQ)</a>
-        <a href="contact.html" class="nav-link">Contact</a>
-      </nav>
-
-      <div class="header-cta-group">
-        <button type="button" class="btn-rfq-tray open-rfq-drawer-btn" title="View Selected Chemicals for Quotation">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          <span>RFQ Tray</span>
-          <span class="badge-count rfq-count-badge" style="display: none;">0</span>
-        </button>
-
-        <a href="inquiry.html" class="btn-primary">
-          Request Spot Quote
-        </a>
-
-        <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Page Header -->
-  <section style="background-color: var(--navy-950); color: #ffffff; padding: 3rem 0 2.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
-    <div class="container">
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: gap; gap: 1.5rem;">
-        <div>
-          <span style="font-size: 0.78rem; text-transform: uppercase; color: #38bdf8; font-weight: 700; letter-spacing: 0.08em; display: inline-block; margin-bottom: 0.4rem;">
-            Industrial Chemical Sourcing Portal
-          </span>
-          <h1 style="color: #ffffff; font-size: clamp(1.85rem, 3vw, 2.5rem); margin-bottom: 0.5rem;">
-            Chemical Master Ledger &amp; Spec Matrix
-          </h1>
-          <p style="color: var(--steel-300); font-size: 0.95rem; max-width: 680px; line-height: 1.55;">
-            Direct plant-origin specifications across our 11 reaction process divisions and specialty chemical product lines.
-          </p>
+    <div class="wrap shop">
+      <aside class="side">
+        <div class="side-group">
+          <h4>Division</h4>
+          <ul class="div-list" id="divList"></ul>
         </div>
-
-        <div style="display: flex; gap: 1rem; align-items: center;">
-          <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 0.75rem 1.25rem; border-radius: 6px; text-align: right;">
-            <div style="font-size: 1.35rem; font-weight: 800; color: #38bdf8; font-family: var(--font-heading);">85 Products</div>
-            <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Active Plant Catalog</div>
+        <div class="side-group">
+          <h4>Physical form</h4>
+          <div class="chips" id="stateChips">
+            <button class="chip on" data-state="all">All</button>
+            <button class="chip" data-state="liquid">Liquid</button>
+            <button class="chip" data-state="solid">Solid</button>
+            <button class="chip" data-state="gas">Gas</button>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
+        <div class="side-help"><b>Can’t find it?</b>We handle custom requirements too. <a href="contact.html"
+            style="color:var(--accent);font-weight:600">Talk to us →</a></div>
+      </aside>
 
-  <!-- Catalog Workbench & Industrial Ledger -->
-  <main class="section-py" style="padding-top: 2rem;">
-    <div class="container">
-      
-      <div class="catalog-workbench">
-        <!-- Process Division Filter Rail -->
-        <div class="process-pill-rail" id="processPillsRail">
-          <!-- Dynamically populated by main.js with all 11 divisions + All -->
-        </div>
-
-        <!-- Workbench Toolbar -->
-        <div class="workbench-toolbar">
-          <div class="toolbar-search-box">
-            <svg class="toolbar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="catalogSearchInput" class="toolbar-input" placeholder="Search by CAS No., Chemical Name, Empirical Formula, or Application...">
+      <section>
+        <div class="toolbar">
+          <div class="search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.3-4.3" />
+            </svg>
+            <input id="q" placeholder="Search name, CAS, formula or application" autocomplete="off">
+            <kbd>/</kbd>
           </div>
-
-          <div class="toolbar-controls">
-            <!-- Physical State Filter -->
-            <select id="physicalStateFilter" class="select-filter" aria-label="Filter by Physical State">
-              <option value="all">Physical State: All Forms</option>
-              <option value="liquid">Liquid / Oil</option>
-              <option value="solid">Solid / Flakes / Crystals</option>
-              <option value="gas">Compressed Gas</option>
-            </select>
-
-            <!-- View Switcher -->
-            <div class="view-toggle-group">
-              <button type="button" class="view-btn active" data-view="ledger" title="B2B Spec Matrix (Table Ledger)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                Spec Matrix
-              </button>
-              <button type="button" class="view-btn" data-view="dossier" title="Detailed Technical Dossiers">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                Dossier Sheets
-              </button>
-            </div>
+          <select class="sel" id="sort" aria-label="Sort">
+            <option value="name">Sort: A–Z</option>
+            <option value="division">Sort: Division</option>
+          </select>
+          <div class="seg" id="viewSeg">
+            <button class="on" data-mode="list">List</button>
+            <button data-mode="grid">Grid</button>
           </div>
         </div>
-
-        <!-- Filter Count & Quick Export Indicator -->
-        <div style="background-color: var(--steel-50); border-bottom: 1px solid var(--steel-200); padding: 0.6rem 1.75rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--steel-600);">
-          <div id="catalogFilteredCount">Showing 85 chemicals</div>
-          <div style="display: flex; gap: 1rem; align-items: center;">
-            <span style="font-family: var(--font-mono); color: var(--steel-500);">&bull; Click any CAS badge to copy</span>
-            <button type="button" onclick="window.print()" class="btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">
-              Print Ledger
-            </button>
-          </div>
-        </div>
-
-        <!-- Products Display Container (Dynamically rendered) -->
-        <div id="productsDisplayContainer">
-          <!-- Populated by main.js with Table Ledger or Dossier Grid -->
-        </div>
-
-      </div>
-
-      <!-- Procurement Guidance Notice -->
-      <div style="margin-top: 2rem; background: #ffffff; border: 1px solid var(--steel-200); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        <div style="font-size: 0.86rem; color: var(--steel-700); line-height: 1.6;">
-          <strong>B2B Procurement &amp; Spot Contracting:</strong> All products are manufactured in dedicated, high-capacity chemical units in Gujarat. Tonnages are available for immediate domestic dispatch across India in dedicated road tankers, ISO containers, and export-compliant palletized drums. Minimum Commercial Order: 100 kg to Bulk Tanker loads (25 to 30 MT).
-        </div>
-      </div>
-
+        <div class="meta-row"><span id="count"></span><button type="button" onclick="resetFilters()">Clear
+            filters</button></div>
+        <div id="out"></div>
+      </section>
     </div>
   </main>
 
-  <!-- Technical Spec Sheet Modal Backdrop -->
-  <div class="modal-backdrop" id="productDossierModal">
-    <div class="dossier-modal-window">
-      <div class="modal-header-bar">
-        <div>
-          <h2 id="modalChemTitle">Chemical Technical Dossier</h2>
-          <div class="meta-line" id="modalChemMeta">CAS: Loading...</div>
-        </div>
-        <button class="modal-close-btn" id="closeModalBtn" aria-label="Close modal">&times;</button>
-      </div>
-
-      <div class="modal-body-scroll" id="modalChemBody">
-        <!-- Loaded dynamically by main.js -->
-      </div>
-
-      <div class="modal-footer-bar">
-        <div style="font-size: 0.82rem; color: var(--steel-600);">
-          Need spot pricing or container logistics?
-        </div>
-        <div style="display: flex; gap: 0.75rem;">
-          <button type="button" class="btn-secondary" id="modalWhatsAppBtn">
-            Instant WhatsApp Quote
-          </button>
-          <button type="button" class="btn-primary" id="modalRfqActionBtn">
-            Add to RFQ Tray +
-          </button>
-        </div>
-      </div>
-    </div>
+  <div class="cmp-tray" id="cmpTray">
+    <span><b id="cmpN">0</b> selected to compare</span>
+    <button class="btn btn-primary btn-sm" id="cmpGo" type="button">Compare</button>
+    <button class="x" id="cmpClear" type="button">Clear</button>
+  </div>
+  <div class="modal" id="cmpModal"><button class="close" id="cmpClose" type="button" aria-label="Close">&times;</button>
+    <h3>Compare products</h3>
+    <div id="cmpBody"></div>
   </div>
 
-  <!-- RFQ Drawer System -->
-  <div id="rfqDrawerBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1040;"></div>
-  
-  <div class="rfq-drawer" id="rfqDrawer">
-    <div class="drawer-header">
-      <div>
-        <h3>Commercial Procurement Tray</h3>
-        <div style="font-size: 0.75rem; color: var(--steel-300);">Direct Plant Dispatch</div>
-      </div>
-      <button type="button" id="closeRfqDrawerBtn" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">&times;</button>
-    </div>
-
-    <div class="drawer-body">
-      <div style="margin-bottom: 1.25rem;">
-        <label style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--steel-600); display: block; margin-bottom: 0.5rem;">
-          Selected Products for Quote:
-        </label>
-        <div id="rfqSelectedItemsContainer">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-
-      <form id="rfqDrawerForm">
-        <div class="rfq-form-group">
-          <label for="rfqName">Contact Person Name *</label>
-          <input type="text" id="rfqName" class="rfq-form-control" placeholder="e.g. Rajesh Shah" required>
-        </div>
-
-        <div class="rfq-form-group">
-          <label for="rfqCompany">Company / Enterprise Name *</label>
-          <input type="text" id="rfqCompany" class="rfq-form-control" placeholder="e.g. Apex Pharma Ltd / Gujarat Textiles" required>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <div class="rfq-form-group">
-            <label for="rfqPhone">Phone / WhatsApp *</label>
-            <input type="tel" id="rfqPhone" class="rfq-form-control" placeholder="+91 9876543210" required>
-          </div>
-          <div class="rfq-form-group">
-            <label for="rfqEmail">Official Email *</label>
-            <input type="email" id="rfqEmail" class="rfq-form-control" placeholder="procurement@company.com" required>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <div class="rfq-form-group">
-            <label for="rfqQuantity">Required Quantity (MT / Kg) *</label>
-            <input type="text" id="rfqQuantity" class="rfq-form-control" placeholder="e.g. 15 MT / Tanker" required>
-          </div>
-          <div class="rfq-form-group">
-            <label for="rfqPackaging">Packaging Specification</label>
-            <select id="rfqPackaging" class="rfq-form-control">
-              <option value="Road Tanker Load">Dedicated Road Tanker</option>
-              <option value="ISO Tank Container">ISO Tank Container</option>
-              <option value="250 Kg GI / MS Drums">250 Kg GI / MS Drums</option>
-              <option value="HDPE Carboys / Drums">HDPE Carboys / Drums</option>
-              <option value="1000 Kg Jumbo Bags">1000 Kg Jumbo Bags</option>
-              <option value="25-50 Kg HDPE Bags">25-50 Kg HDPE Bags</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="rfq-form-group">
-          <label for="rfqLocation">Delivery Destination / Port *</label>
-          <input type="text" id="rfqLocation" class="rfq-form-control" placeholder="e.g. Ankleshwar, Dahej, Vapi, Mundra Port" required>
-        </div>
-
-        <div class="rfq-form-group">
-          <label for="rfqNotes">Grade / Technical Specifications Required</label>
-          <textarea id="rfqNotes" class="rfq-form-control" rows="2" placeholder="Specify required purity percentage, target delivery date, or TDS request..."></textarea>
-        </div>
-
-        <div class="rfq-channel-toggle">
-          <span class="channel-label">Select Inquiry Processing Channel:</span>
-          <div style="display: flex; gap: 1rem; font-size: 0.82rem;">
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="radio" name="rfqChannel" value="whatsapp" checked>
-              <strong>Direct WhatsApp Desk</strong>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="radio" name="rfqChannel" value="email">
-              <strong>Official Commercial Email</strong>
-            </label>
-          </div>
-        </div>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.75rem; border-radius: 4px; font-size: 0.76rem; color: #166534; margin-bottom: 1.25rem;">
-          &check; Inquiries submitted are formatted with full technical CAS parameters for immediate commercial processing.
-        </div>
-
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.95rem;">
-          Dispatch RFQ to Commercial Desk &rarr;
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Corporate Footer -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <h4>BHAGWATI CHEMICALS</h4>
-          <p class="footer-desc">
-            Trusted industrial chemical manufacturer and distributor established in 1985. Delivering consistent quality across bulk, fine, and specialty chemical portfolios.
-          </p>
-          <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono);">
-            CERTIFICATIONS: ISO 9001:2015 &bull; GST COMPLIANT
-          </div>
-        </div>
-
-        <div class="footer-col">
-          <h5>Product Divisions</h5>
-          <ul class="footer-links">
-            <li><a href="products.html?category=Chlorination+Process">Chlorination Process</a></li>
-            <li><a href="products.html?category=Nitration+Process">Nitration Process</a></li>
-            <li><a href="products.html?category=Hydrogenation+Process">Hydrogenation Process</a></li>
-            <li><a href="products.html?category=Acid+Chlorides">Acid Chlorides</a></li>
-            <li><a href="products.html?category=Chlor-Alkali+%26+Electrolysis">Chlor-Alkali &amp; Caustic</a></li>
-            <li><a href="products.html?category=Sulphuric+%26+Bulk+Chemical+Division">Sulphuric &amp; Bulk Chemicals</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-col">
-          <h5>Enterprise Links</h5>
-          <ul class="footer-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="products.html">All 85+ Chemicals</a></li>
-            <li><a href="about.html">About Us</a></li>
-            <li><a href="infrastructure.html">Manufacturing Plants</a></li>
-            <li><a href="inquiry.html">Request Quote (RFQ)</a></li>
-            <li><a href="contact.html">Contact Us</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-col">
-          <h5>Commercial Contacts</h5>
-          <div class="footer-contact-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            <div>
-              <strong>Commercial Office:</strong><br>
-              207, New Cloth Market, Outside Raipur Gate, Raipur, Ahmedabad &bull; 380002, Gujarat, India.
-            </div>
-          </div>
-          <div class="footer-contact-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            <div>
-              <strong>Sales Desks:</strong><br>
-              +91 9428001153<br>
-              +91 9825030103
-            </div>
-          </div>
-          <div class="footer-contact-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            <div>
-              <strong>Official Inquiries:</strong><br>
-              info@bhagwatichemicals.in
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <div>
-          &copy; 2026 Bhagwati Chemicals. All rights reserved. ISO 9001:2015 Certified.
-        </div>
-        <div style="display: flex; gap: 1.5rem;">
-          <a href="inquiry.html">Terms of Procurement</a>
-          <a href="inquiry.html">ISO Quality Policy</a>
-          <a href="contact.html">Plant Safety</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Scripts -->
+  <div id="site-footer"></div>
   <script src="assets/js/products-data.js"></script>
+  <script src="assets/js/layout.js"></script>
   <script src="assets/js/main.js"></script>
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      const catParam = params.get('category');
-      if (catParam) {
-        AppState.currentCategory = catParam;
-        const pills = document.querySelectorAll('.process-pill');
-        pills.forEach(p => {
-          if (p.getAttribute('data-category') === catParam) p.classList.add('active');
-          else p.classList.remove('active');
-        });
-        renderProducts();
-      }
-    });
-  </script>
 </body>
+
 </html>

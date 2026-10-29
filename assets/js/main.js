@@ -1,784 +1,406 @@
-/**
- * BHAGWATI CHEMICALS
- * Master Portal Engine: Search, Filtering, Spec Matrix Ledger,
- * Technical Dossier Drawer, and Commercial RFQ Forwarding
- */
+/* Bhagwati Chemicals — site behaviour */
 
-// Application State
 const AppState = {
-  currentCategory: 'All Divisions',
-  currentSearch: '',
-  currentStateFilter: 'all',
-  currentView: 'ledger', // 'ledger' or 'dossier'
   rfqBasket: [],
-  selectedProductForModal: null,
-  inquiryRegistry: []
+  inquiryRegistry: [],
+  compare: []
 };
 
-// Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
-  loadInquiryRegistry();
-  loadRfqBasket();
-  initHeroFinder();
-  initProcessPills();
-  initToolbarControls();
-  initRfqDrawer();
-  initModalHandlers();
-  initMobileNav();
-  renderProducts();
-});
+const $ = (s, c) => (c || document).querySelector(s);
+const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
 
-// Load persistent data
-function loadInquiryRegistry() {
-  try {
-    const saved = localStorage.getItem('bhagwati_inquiries');
-    if (saved) {
-      AppState.inquiryRegistry = JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Could not load inquiries:', e);
-  }
+function escapeHtml(str) {
+  if (str === undefined || str === null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-function saveInquiryRegistry() {
-  try {
-    localStorage.setItem('bhagwati_inquiries', JSON.stringify(AppState.inquiryRegistry));
-  } catch (e) {
-    console.error('Could not save inquiries:', e);
-  }
-}
-
-function loadRfqBasket() {
-  try {
-    const saved = localStorage.getItem('bhagwati_rfq_basket');
-    if (saved) {
-      AppState.rfqBasket = JSON.parse(saved);
-      updateRfqBadge();
-    }
-  } catch (e) {
-    console.error('Could not load RFQ basket:', e);
-  }
-}
-
-function saveRfqBasket() {
-  try {
-    localStorage.setItem('bhagwati_rfq_basket', JSON.stringify(AppState.rfqBasket));
-    updateRfqBadge();
-  } catch (e) {
-    console.error('Could not save RFQ basket:', e);
-  }
-}
-
-function updateRfqBadge() {
-  const badges = document.querySelectorAll('.rfq-count-badge');
-  badges.forEach(b => {
+/* ---------- storage ---------- */
+function loadInquiryRegistry() { try { AppState.inquiryRegistry = JSON.parse(localStorage.getItem('bhagwati_inquiries') || '[]'); } catch (e) {} }
+function saveInquiryRegistry() { try { localStorage.setItem('bhagwati_inquiries', JSON.stringify(AppState.inquiryRegistry)); } catch (e) {} }
+function loadRfqBasket() { try { AppState.rfqBasket = JSON.parse(localStorage.getItem('bhagwati_rfq_basket') || '[]'); } catch (e) {} updateRfqBadge(); }
+function saveRfqBasket() { try { localStorage.setItem('bhagwati_rfq_basket', JSON.stringify(AppState.rfqBasket)); } catch (e) {} updateRfqBadge(true); }
+function updateRfqBadge(animate) {
+  $$('.rfq-count-badge').forEach(b => {
     b.textContent = AppState.rfqBasket.length;
-    b.style.display = AppState.rfqBasket.length > 0 ? 'inline-flex' : 'none';
+    b.style.display = AppState.rfqBasket.length ? 'inline-flex' : 'none';
+    if (animate) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
   });
 }
 
-// Hero Finder Autocomplete
-function initHeroFinder() {
-  const input = document.getElementById('heroFinderInput');
-  const resultsContainer = document.getElementById('heroFinderResults');
-  if (!input || !resultsContainer) return;
-
-  const performSearch = (q) => {
-    if (!q || q.trim().length === 0) {
-      // Show top featured chemicals
-      const featured = CHEMICAL_PRODUCTS.slice(0, 5);
-      renderHeroResults(featured, resultsContainer);
-      return;
+/* ---------- global scroll behaviour ---------- */
+function initScroll() {
+  const nav = $('#nav');
+  const bar = $('.progress');
+  const lattice = $$('.hero-lattice');
+  let ticking = false;
+  const onScroll = () => {
+    const y = window.scrollY;
+    if (nav) nav.classList.toggle('scrolled', y > 12);
+    if (bar) {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, y / max) : 0) + ')';
     }
-    const term = q.toLowerCase().trim();
-    const matches = CHEMICAL_PRODUCTS.filter(p => {
-      return (
-        p.name.toLowerCase().includes(term) ||
-        (p.cas && p.cas.toLowerCase().includes(term)) ||
-        (p.formula && p.formula.toLowerCase().includes(term)) ||
-        (p.application && p.application.toLowerCase().includes(term)) ||
-        (p.categories && p.categories.some(c => c.toLowerCase().includes(term)))
-      );
-    }).slice(0, 7);
-    renderHeroResults(matches, resultsContainer);
+    lattice.forEach(l => { l.style.transform = 'translate3d(0,' + (y * 0.18) + 'px,0)'; });
+    updateSteps();
+    ticking = false;
   };
+  window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(onScroll); ticking = true; } }, { passive: true });
+  onScroll();
+}
 
-  input.addEventListener('input', (e) => performSearch(e.target.value));
-  performSearch('');
+function initReveal() {
+  const items = $$('[data-reveal]');
+  if (!('IntersectionObserver' in window)) { items.forEach(i => i.classList.add('in')); return; }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  items.forEach(i => io.observe(i));
+}
 
-  // Quick tag buttons
-  const tagBtns = document.querySelectorAll('.finder-tag-btn');
-  tagBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tag = btn.getAttribute('data-tag');
-      input.value = tag;
-      performSearch(tag);
-    });
+function initCounters() {
+  const els = $$('[data-count-to]');
+  if (!els.length) return;
+  const run = el => {
+    const end = parseFloat(el.getAttribute('data-count-to'));
+    const suffix = el.getAttribute('data-suffix') || '';
+    const t0 = performance.now(), dur = 1400;
+    const tick = now => {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(end * eased) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { run(e.target); io.unobserve(e.target); } }), { threshold: 0.5 });
+  els.forEach(e => io.observe(e));
+}
+
+function updateSteps() {
+  const wrap = $('.steps');
+  if (!wrap) return;
+  const r = wrap.getBoundingClientRect();
+  const vh = window.innerHeight;
+  const progress = Math.max(0, Math.min(1, (vh * 0.65 - r.top) / r.height));
+  const fill = $('.steps-fill', wrap);
+  if (fill) fill.style.height = (progress * 100) + '%';
+  $$('.step', wrap).forEach(s => {
+    const sr = s.getBoundingClientRect();
+    s.classList.toggle('on', sr.top < vh * 0.65);
   });
 }
 
-function renderHeroResults(products, container) {
-  if (!products || products.length === 0) {
-    container.innerHTML = `<div style="padding: 0.75rem; color: #94a3b8; font-size: 0.82rem; text-align: center;">No matching chemical found in catalog. Contact our commercial desk directly.</div>`;
-    return;
+function initNav() {
+  const burger = $('#burger'), links = $('#links');
+  if (burger && links) {
+    burger.addEventListener('click', () => { burger.classList.toggle('open'); links.classList.toggle('open'); });
+    $$('a, button', links).forEach(el => el.addEventListener('click', () => { burger.classList.remove('open'); links.classList.remove('open'); }));
   }
-  container.innerHTML = products.map(p => `
-    <div class="finder-result-item" onclick="openProductModalById('${p.id}')">
-      <div>
-        <div class="finder-res-name">${escapeHtml(p.name)}</div>
-        <div class="finder-res-meta">CAS: ${escapeHtml(p.cas || 'N/A')} &bull; Formula: ${escapeHtml(p.formula || '—')}</div>
-      </div>
-      <button class="btn-table-rfq" onclick="event.stopPropagation(); quickAddRfq('${p.id}');" title="Add to RFQ">RFQ +</button>
-    </div>
-  `).join('');
 }
 
-// Process Pills Filter Rail
-function initProcessPills() {
-  const rail = document.getElementById('processPillsRail');
-  if (!rail) return;
-
-  rail.innerHTML = CHEMICAL_CATEGORIES.map(cat => {
-    const count = cat === 'All Divisions' 
-      ? CHEMICAL_PRODUCTS.length 
-      : CHEMICAL_PRODUCTS.filter(p => p.categories && p.categories.includes(cat)).length;
-    return `
-      <button class="process-pill ${cat === AppState.currentCategory ? 'active' : ''}" data-category="${cat}">
-        ${cat} <span class="count">${count}</span>
-      </button>
-    `;
-  }).join('');
-
-  rail.addEventListener('click', (e) => {
-    const btn = e.target.closest('.process-pill');
-    if (!btn) return;
-    const cat = btn.getAttribute('data-category');
-    AppState.currentCategory = cat;
-    
-    // Update active class
-    rail.querySelectorAll('.process-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    renderProducts();
+/* ---------- division counts (home) ---------- */
+function initDivisionCounts() {
+  $$('[data-div]').forEach(el => {
+    const d = el.getAttribute('data-div');
+    el.textContent = CHEMICAL_PRODUCTS.filter(p => p.categories && p.categories.includes(d)).length;
   });
+  $$('[data-total]').forEach(el => { el.textContent = CHEMICAL_PRODUCTS.length; });
 }
 
-// Toolbar controls
-function initToolbarControls() {
-  const searchInput = document.getElementById('catalogSearchInput');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      AppState.currentSearch = e.target.value;
-      renderProducts();
-    });
-  }
-
-  const stateSelect = document.getElementById('physicalStateFilter');
-  if (stateSelect) {
-    stateSelect.addEventListener('change', (e) => {
-      AppState.currentStateFilter = e.target.value;
-      renderProducts();
-    });
-  }
-
-  // View switchers
-  const viewBtns = document.querySelectorAll('.view-btn');
-  viewBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const view = btn.getAttribute('data-view');
-      AppState.currentView = view;
-      viewBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderProducts();
-    });
-  });
+/* ---------- hero finder ---------- */
+function initHeroFinder() {
+  const input = $('#heroFinderInput'), out = $('#heroFinderResults');
+  if (!input || !out) return;
+  const render = list => {
+    if (!list.length) { out.innerHTML = '<div class="finder-empty">No match. Ask our desk — we handle custom requirements.</div>'; return; }
+    out.innerHTML = list.map(p => `
+      <a class="finder-row" href="products.html?q=${encodeURIComponent(p.name)}">
+        <span><b>${escapeHtml(p.name)}</b><small>CAS ${escapeHtml(p.cas || 'N/A')} · ${escapeHtml(p.formula || '—')}</small></span>
+        <span class="go">→</span>
+      </a>`).join('');
+  };
+  const search = q => {
+    q = (q || '').toLowerCase().trim();
+    if (!q) return render(CHEMICAL_PRODUCTS.slice(0, 5));
+    render(CHEMICAL_PRODUCTS.filter(p =>
+      p.name.toLowerCase().includes(q) || (p.cas || '').toLowerCase().includes(q) ||
+      (p.formula || '').toLowerCase().includes(q) || (p.application || '').toLowerCase().includes(q)).slice(0, 6));
+  };
+  input.addEventListener('input', e => search(e.target.value));
+  $$('.finder-tags button').forEach(b => b.addEventListener('click', () => { input.value = b.dataset.tag; search(b.dataset.tag); }));
+  search('');
 }
 
-// Filtered products calculation
-function getFilteredProducts() {
-  return CHEMICAL_PRODUCTS.filter(p => {
-    // Category check
-    if (AppState.currentCategory !== 'All Divisions') {
-      if (!p.categories || !p.categories.includes(AppState.currentCategory)) {
-        return false;
-      }
-    }
-    // Search check
-    if (AppState.currentSearch && AppState.currentSearch.trim() !== '') {
-      const q = AppState.currentSearch.toLowerCase().trim();
-      const match = 
-        p.name.toLowerCase().includes(q) ||
-        (p.cas && p.cas.toLowerCase().includes(q)) ||
-        (p.formula && p.formula.toLowerCase().includes(q)) ||
-        (p.purity && p.purity.toLowerCase().includes(q)) ||
-        (p.application && p.application.toLowerCase().includes(q)) ||
-        (p.packing && p.packing.toLowerCase().includes(q));
-      if (!match) return false;
-    }
-    // Physical state check
-    if (AppState.currentStateFilter !== 'all') {
-      const app = (p.appearance || '').toLowerCase();
-      if (AppState.currentStateFilter === 'liquid' && !app.includes('liquid') && !app.includes('oil')) return false;
-      if (AppState.currentStateFilter === 'solid' && !app.includes('solid') && !app.includes('flake') && !app.includes('powder') && !app.includes('lump') && !app.includes('granule')) return false;
-      if (AppState.currentStateFilter === 'gas' && !app.includes('gas')) return false;
+/* ---------- products page ---------- */
+const View = { cat: 'All Divisions', q: '', state: 'all', sort: 'name', mode: 'list', open: null };
+
+function stateOf(p) {
+  const a = (p.appearance || '').toLowerCase();
+  if (a.includes('gas')) return 'gas';
+  if (a.includes('liquid') || a.includes('oil') || a.includes('solution')) return 'liquid';
+  if (/(solid|flake|powder|lump|granule|crystal|bead)/.test(a)) return 'solid';
+  return 'other';
+}
+function filtered() {
+  const q = View.q.toLowerCase().trim();
+  let list = CHEMICAL_PRODUCTS.filter(p => {
+    if (View.cat !== 'All Divisions' && !(p.categories || []).includes(View.cat)) return false;
+    if (View.state !== 'all' && stateOf(p) !== View.state) return false;
+    if (q) {
+      const hay = [p.name, p.cas, p.formula, p.application, p.purity, p.packing].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
     }
     return true;
   });
+  if (View.sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
+  if (View.sort === 'division') list.sort((a, b) => a.primaryCategory.localeCompare(b.primaryCategory) || a.name.localeCompare(b.name));
+  return list;
+}
+function inRfq(id) { return AppState.rfqBasket.some(i => i.id === id); }
+
+function rowHtml(p) {
+  const open = View.open === p.id;
+  const cmp = AppState.compare.includes(p.id);
+  return `
+  <div class="row ${open ? 'open' : ''}" data-id="${p.id}">
+    <div class="row-main" data-toggle="${p.id}">
+      <input type="checkbox" class="cmp" data-cmp="${p.id}" ${cmp ? 'checked' : ''} aria-label="Compare ${escapeHtml(p.name)}">
+      <div class="nm"><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.formula || '—')}</small></div>
+      <div class="cell hide-m"><small>CAS</small><span class="cas" data-cas="${escapeHtml(p.cas)}">${escapeHtml(p.cas || 'N/A')}</span></div>
+      <div class="cell hide-m"><small>Purity</small>${escapeHtml(p.purity || 'Commercial')}</div>
+      <div class="cell hide-m"><small>Division</small>${escapeHtml(p.primaryCategory.replace(' Process', ''))}</div>
+      <div class="row-act">
+        <button class="btn btn-sm ${inRfq(p.id) ? 'btn-dark' : 'btn-ghost'}" data-rfq="${p.id}">${inRfq(p.id) ? 'Added ✓' : '+ Quote'}</button>
+        <span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </div>
+    </div>
+    <div class="row-more"><div>
+      <div class="detail">
+        <div class="d"><small>Appearance</small><span>${escapeHtml(p.appearance || '—')}</span></div>
+        <div class="d"><small>Molecular weight</small><span>${escapeHtml(p.molecularWeight || '—')}</span></div>
+        <div class="d"><small>CAS number</small><span class="mono">${escapeHtml(p.cas || 'N/A')}</span></div>
+        <div class="d"><small>Purity</small><span>${escapeHtml(p.purity || 'Commercial')}</span></div>
+        <div class="d wide"><small>Packaging</small><span>${escapeHtml(p.packing || 'Bulk / drums')}</span></div>
+        <div class="d wide"><small>Applications</small><span>${escapeHtml(p.application || 'Industrial processing')}</span></div>
+        <div class="acts">
+          <button class="btn btn-primary btn-sm" data-rfq="${p.id}">${inRfq(p.id) ? 'In quote list ✓' : 'Add to quote list'}</button>
+          <button class="btn btn-wa btn-sm" data-wa="${p.id}">Ask on WhatsApp</button>
+        </div>
+      </div>
+    </div></div>
+  </div>`;
+}
+function tileHtml(p) {
+  return `
+  <article class="tile">
+    <span class="tag">${escapeHtml(p.primaryCategory)}</span>
+    <div><h3>${escapeHtml(p.name)}</h3><div class="fm">${escapeHtml(p.formula || '—')}</div></div>
+    <div class="kv">
+      <div><small>CAS</small><span class="cas" data-cas="${escapeHtml(p.cas)}">${escapeHtml(p.cas || 'N/A')}</span></div>
+      <div><small>Purity</small>${escapeHtml(p.purity || 'Commercial')}</div>
+    </div>
+    <p class="app">${escapeHtml(p.application || '')}</p>
+    <div class="foot">
+      <label style="display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--muted)"><input type="checkbox" class="cmp" data-cmp="${p.id}" ${AppState.compare.includes(p.id) ? 'checked' : ''}> Compare</label>
+      <button class="btn btn-sm ${inRfq(p.id) ? 'btn-dark' : 'btn-primary'}" data-rfq="${p.id}">${inRfq(p.id) ? 'Added ✓' : '+ Quote'}</button>
+    </div>
+  </article>`;
 }
 
-// Render Products (Ledger or Dossier)
 function renderProducts() {
-  const container = document.getElementById('productsDisplayContainer');
-  const countDisplay = document.getElementById('catalogFilteredCount');
-  if (!container) return;
-
-  const filtered = getFilteredProducts();
-  if (countDisplay) {
-    countDisplay.textContent = `Showing ${filtered.length} of ${CHEMICAL_PRODUCTS.length} chemicals`;
-  }
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="padding: 4rem 2rem; text-align: center; color: #64748b;">
-        <h4 style="font-size: 1.15rem; color: #0f172a; margin-bottom: 0.5rem;">No chemical products matched your query</h4>
-        <p style="font-size: 0.9rem; max-width: 500px; margin: 0 auto 1.5rem;">
-          Our manufacturing plants produce custom synthesis and downstream derivatives not listed publicly. Contact our commercial desk for custom requirements.
-        </p>
-        <button class="btn-primary" onclick="resetFilters()">Reset Catalog Filters</button>
-      </div>
-    `;
+  const out = $('#out');
+  if (!out) return;
+  const list = filtered();
+  $('#count').textContent = `${list.length} of ${CHEMICAL_PRODUCTS.length} products`;
+  if (!list.length) {
+    out.innerHTML = `<div class="empty"><h3>No products match</h3><p>Try a different name, CAS number or division.</p><br><button class="btn btn-dark btn-sm" data-reset>Clear filters</button></div>`;
     return;
   }
-
-  if (AppState.currentView === 'ledger') {
-    renderLedgerTable(filtered, container);
-  } else {
-    renderDossierGrid(filtered, container);
-  }
+  out.innerHTML = View.mode === 'list'
+    ? `<div class="rows">${list.map(rowHtml).join('')}</div>`
+    : `<div class="tiles">${list.map(tileHtml).join('')}</div>`;
 }
 
-// Render Spec Matrix Table (The Industrial Ledger)
-function renderLedgerTable(products, container) {
-  let html = `
-    <div class="ledger-table-container">
-      <table class="chemical-ledger-table">
-        <thead>
-          <tr>
-            <th class="chem-name-col">Chemical Name & Formula</th>
-            <th>CAS Registry No.</th>
-            <th>Process Division</th>
-            <th>Standard Assay / Purity</th>
-            <th>Physical State</th>
-            <th>Packaging Standards</th>
-            <th style="text-align: right;">Commercial Action</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  products.forEach(p => {
-    const isAdded = AppState.rfqBasket.some(item => item.id === p.id);
-    html += `
-      <tr>
-        <td class="chem-name-col">
-          <span class="chem-title" onclick="openProductModalById('${p.id}')">${escapeHtml(p.name)}</span>
-          <div class="chem-sub">
-            <span class="formula-text">${escapeHtml(p.formula || '—')}</span>
-            ${p.molecularWeight && p.molecularWeight !== '—' ? `<span class="mol-wt">MW: ${escapeHtml(p.molecularWeight)}</span>` : ''}
-          </div>
-        </td>
-        <td>
-          <span class="cas-badge" onclick="copyCas('${p.cas}', this)" title="Click to copy CAS No.">
-            ${escapeHtml(p.cas || 'N/A')}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          </span>
-        </td>
-        <td>
-          <span class="process-tag">${escapeHtml(p.primaryCategory)}</span>
-        </td>
-        <td>
-          <span class="purity-badge">${escapeHtml(p.purity || 'Commercial')}</span>
-        </td>
-        <td>
-          <span style="font-size: 0.82rem; color: #334155;">${escapeHtml(p.appearance || '—')}</span>
-        </td>
-        <td>
-          <div class="packaging-text">${escapeHtml(p.packing || 'Bulk Tanker / Drums')}</div>
-        </td>
-        <td>
-          <div class="action-btn-group" style="justify-content: flex-end;">
-            <button class="btn-table-dossier" onclick="openProductModalById('${p.id}')" title="Technical Dossier">
-              Spec Sheet
-            </button>
-            <button class="btn-table-rfq" onclick="quickAddRfq('${p.id}')" style="${isAdded ? 'background-color: #047857;' : ''}">
-              ${isAdded ? 'In RFQ ✓' : 'RFQ +'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  container.innerHTML = html;
+function renderDivList() {
+  const el = $('#divList');
+  if (!el) return;
+  el.innerHTML = CHEMICAL_CATEGORIES.map(c => {
+    const n = c === 'All Divisions' ? CHEMICAL_PRODUCTS.length : CHEMICAL_PRODUCTS.filter(p => (p.categories || []).includes(c)).length;
+    return `<li><button class="${c === View.cat ? 'on' : ''}" data-cat="${escapeHtml(c)}"><span>${escapeHtml(c)}</span><span class="k">${n}</span></button></li>`;
+  }).join('');
 }
 
-// Render Technical Dossier Grid View
-function renderDossierGrid(products, container) {
-  let html = `<div class="dossier-grid">`;
-
-  products.forEach(p => {
-    const isAdded = AppState.rfqBasket.some(item => item.id === p.id);
-    html += `
-      <div class="dossier-tile">
-        <div class="tile-top">
-          <div class="tile-process-strip">
-            <span class="process-tag">${escapeHtml(p.primaryCategory)}</span>
-            <span class="cas-badge" onclick="copyCas('${p.cas}', this)">
-              CAS: ${escapeHtml(p.cas || 'N/A')}
-            </span>
-          </div>
-          <h3 class="tile-title" onclick="openProductModalById('${p.id}')" style="cursor: pointer;">
-            ${escapeHtml(p.name)}
-          </h3>
-          <div style="font-family: var(--font-mono); font-size: 0.85rem; color: #0284c7; margin-bottom: 0.75rem;">
-            ${escapeHtml(p.formula || 'Formula: —')} ${p.molecularWeight && p.molecularWeight !== '—' ? `&bull; MW ${escapeHtml(p.molecularWeight)}` : ''}
-          </div>
-        </div>
-
-        <div class="tile-specs-list">
-          <div class="spec-cell">
-            <span class="spec-cell-label">Guaranteed Assay</span>
-            <span class="spec-cell-value">${escapeHtml(p.purity || 'Commercial')}</span>
-          </div>
-          <div class="spec-cell">
-            <span class="spec-cell-label">Physical Form</span>
-            <span class="spec-cell-value" style="font-size: 0.75rem;">${escapeHtml(p.appearance || 'Standard')}</span>
-          </div>
-        </div>
-
-        <div class="tile-application">
-          <strong style="color: #0f172a; font-size: 0.76rem; text-transform: uppercase;">Downstream Applications:</strong><br>
-          ${escapeHtml(p.application || 'Industrial processing, synthesis intermediates, and specialized manufacturing.')}
-        </div>
-
-        <div class="tile-footer">
-          <button class="btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.8rem;" onclick="openProductModalById('${p.id}')">
-            Technical Dossier
-          </button>
-          <button class="btn-primary" style="padding: 0.45rem 0.95rem; font-size: 0.8rem; ${isAdded ? 'background-color: #047857; border-color: #047857;' : ''}" onclick="quickAddRfq('${p.id}')">
-            ${isAdded ? 'Added to RFQ ✓' : 'Add to RFQ +'}
-          </button>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-  container.innerHTML = html;
+function renderCmpTray() {
+  const tray = $('#cmpTray');
+  if (!tray) return;
+  const n = AppState.compare.length;
+  tray.classList.toggle('show', n > 0);
+  $('#cmpN').textContent = n;
+  $('#cmpGo').disabled = n < 2;
+  $('#cmpGo').style.opacity = n < 2 ? .5 : 1;
 }
-
-// Reset filters
-function resetFilters() {
-  AppState.currentCategory = 'All Divisions';
-  AppState.currentSearch = '';
-  AppState.currentStateFilter = 'all';
-  
-  const searchInput = document.getElementById('catalogSearchInput');
-  if (searchInput) searchInput.value = '';
-  const stateSelect = document.getElementById('physicalStateFilter');
-  if (stateSelect) stateSelect.value = 'all';
-
-  const pills = document.querySelectorAll('.process-pill');
-  pills.forEach(p => {
-    if (p.getAttribute('data-category') === 'All Divisions') p.classList.add('active');
-    else p.classList.remove('active');
-  });
-
-  renderProducts();
+function openCompare() {
+  const items = AppState.compare.map(id => CHEMICAL_PRODUCTS.find(p => p.id === id)).filter(Boolean);
+  const rows = [['CAS', 'cas'], ['Formula', 'formula'], ['Molecular weight', 'molecularWeight'], ['Appearance', 'appearance'], ['Purity', 'purity'], ['Packaging', 'packing'], ['Applications', 'application'], ['Division', 'primaryCategory']];
+  $('#cmpBody').innerHTML = `<table class="ctable"><thead><tr><th></th>${items.map(p => `<th>${escapeHtml(p.name)}</th>`).join('')}</tr></thead><tbody>` +
+    rows.map(r => `<tr><th>${r[0]}</th>${items.map(p => `<td>${escapeHtml(p[r[1]] || '—')}</td>`).join('')}</tr>`).join('') + `</tbody></table>`;
+  $('#cmpModal').classList.add('open'); $('#veil').classList.add('open');
 }
+function closeCompare() { const m = $('#cmpModal'); if (m) m.classList.remove('open'); if (!$('#rfqDrawer.open')) $('#veil').classList.remove('open'); }
 
-// 1-Click Copy CAS Number
-function copyCas(cas, element) {
-  if (!cas || cas === 'N/A') return;
-  navigator.clipboard.writeText(cas).then(() => {
-    const originalText = element.innerHTML;
-    element.innerHTML = `Copied! ✓`;
-    element.style.backgroundColor = '#d1fae5';
-    element.style.color = '#065f46';
-    setTimeout(() => {
-      element.innerHTML = originalText;
-      element.style.backgroundColor = '';
-      element.style.color = '';
-    }, 1500);
+function initProductsPage() {
+  if (!$('#out')) return;
+  const params = new URLSearchParams(location.search);
+  if (params.get('category')) View.cat = params.get('category');
+  if (params.get('q')) { View.q = params.get('q'); $('#q').value = View.q; }
+
+  renderDivList(); renderProducts(); renderCmpTray();
+
+  $('#divList').addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]'); if (!b) return;
+    View.cat = b.dataset.cat; View.open = null; renderDivList(); renderProducts();
   });
-}
-
-// Technical Dossier Modal
-function initModalHandlers() {
-  const backdrop = document.getElementById('productDossierModal');
-  const closeBtn = document.getElementById('closeModalBtn');
-  if (!backdrop) return;
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeModal);
-  }
-
-  backdrop.addEventListener('click', (e) => {
-    if (e.target === backdrop) closeModal();
+  $('#q').addEventListener('input', e => { View.q = e.target.value; renderProducts(); });
+  $('#sort').addEventListener('change', e => { View.sort = e.target.value; renderProducts(); });
+  $('#stateChips').addEventListener('click', e => {
+    const b = e.target.closest('[data-state]'); if (!b) return;
+    View.state = b.dataset.state;
+    $$('#stateChips .chip').forEach(c => c.classList.toggle('on', c === b));
+    renderProducts();
+  });
+  $('#viewSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-mode]'); if (!b) return;
+    View.mode = b.dataset.mode; View.open = null;
+    $$('#viewSeg button').forEach(x => x.classList.toggle('on', x === b));
+    renderProducts();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); $('#q').focus(); }
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && backdrop.classList.contains('open')) {
-      closeModal();
+  $('#out').addEventListener('click', e => {
+    const reset = e.target.closest('[data-reset]'); if (reset) return resetFilters();
+    const cas = e.target.closest('[data-cas]');
+    if (cas) { e.stopPropagation(); copyCas(cas.dataset.cas, cas); return; }
+    const rfq = e.target.closest('[data-rfq]');
+    if (rfq) { e.stopPropagation(); quickAddRfq(rfq.dataset.rfq, false); return; }
+    const wa = e.target.closest('[data-wa]');
+    if (wa) { e.stopPropagation(); sendDirectWhatsAppQuote(CHEMICAL_PRODUCTS.find(p => p.id === wa.dataset.wa)); return; }
+    const cmp = e.target.closest('[data-cmp]');
+    if (cmp) {
+      e.stopPropagation();
+      const id = cmp.dataset.cmp, i = AppState.compare.indexOf(id);
+      if (i > -1) AppState.compare.splice(i, 1);
+      else if (AppState.compare.length < 3) AppState.compare.push(id);
+      else { cmp.checked = false; }
+      renderCmpTray(); return;
+    }
+    const row = e.target.closest('[data-toggle]');
+    if (row) {
+      const id = row.dataset.toggle;
+      const el = row.parentElement;
+      $$('.row.open').forEach(r => { if (r !== el) r.classList.remove('open'); });
+      el.classList.toggle('open');
+      View.open = el.classList.contains('open') ? id : null;
     }
   });
+
+  $('#cmpGo').addEventListener('click', openCompare);
+  $('#cmpClear').addEventListener('click', () => { AppState.compare = []; renderCmpTray(); renderProducts(); });
+  $('#cmpClose').addEventListener('click', closeCompare);
 }
 
-function openProductModalById(id) {
-  const product = CHEMICAL_PRODUCTS.find(p => p.id === id);
-  if (!product) return;
-  AppState.selectedProductForModal = product;
-
-  const titleEl = document.getElementById('modalChemTitle');
-  const metaEl = document.getElementById('modalChemMeta');
-  const bodyEl = document.getElementById('modalChemBody');
-  const modalRfqBtn = document.getElementById('modalRfqActionBtn');
-  const modalWhatsAppBtn = document.getElementById('modalWhatsAppBtn');
-
-  if (titleEl) titleEl.textContent = product.name;
-  if (metaEl) {
-    metaEl.innerHTML = `CAS: ${escapeHtml(product.cas || 'N/A')} &bull; Formula: ${escapeHtml(product.formula || '—')} &bull; Category: ${escapeHtml(product.primaryCategory)}`;
-  }
-
-  if (bodyEl) {
-    bodyEl.innerHTML = `
-      <div class="dossier-section-block">
-        <h4>1. Chemical Identification & Parameters</h4>
-        <table class="dossier-meta-table">
-          <tr>
-            <th>Product Name / Synonyms</th>
-            <td>${escapeHtml(product.name)} (${escapeHtml(product.title)})</td>
-          </tr>
-          <tr>
-            <th>CAS Registry Number</th>
-            <td><span class="font-mono" style="font-weight: 700;">${escapeHtml(product.cas || 'N/A')}</span></td>
-          </tr>
-          <tr>
-            <th>Empirical Formula</th>
-            <td><span class="font-mono">${escapeHtml(product.formula || '—')}</span></td>
-          </tr>
-          <tr>
-            <th>Molecular Weight</th>
-            <td>${escapeHtml(product.molecularWeight || '—')}</td>
-          </tr>
-          <tr>
-            <th>Standard Commercial Assay</th>
-            <td><strong style="color: #0284c7;">${escapeHtml(product.purity || 'Commercial Grade')}</strong></td>
-          </tr>
-          <tr>
-            <th>Physical State & Appearance</th>
-            <td>${escapeHtml(product.appearance || '—')}</td>
-          </tr>
-          <tr>
-            <th>Process Division</th>
-            <td>${escapeHtml(product.categories ? product.categories.join(', ') : product.primaryCategory)}</td>
-          </tr>
-        </table>
-      </div>
-
-      <div class="dossier-section-block">
-        <h4>2. Packaging, Bulk Logistics & Container Types</h4>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem 1.25rem; border-radius: 6px; font-size: 0.88rem; color: #1e293b; line-height: 1.6;">
-          <strong>Standard Packaging:</strong> ${escapeHtml(product.packing || 'Loose Tanker loads, ISO Containers, MS/HDPE Drums, or Palletized Bags.')}
-          <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #64748b;">
-            * Available for domestic supply across India and global export consignments via Mundra / Kandla ports.
-          </div>
-        </div>
-      </div>
-
-      <div class="dossier-section-block">
-        <h4>3. Downstream Commercial Applications</h4>
-        <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; background: #ffffff; border-left: 3px solid #0284c7; padding-left: 1rem;">
-          ${escapeHtml(product.application || 'Key intermediate in active pharmaceutical ingredient (API) synthesis, agrochemicals, dyestuffs, polymer stabilizers, rubber chemicals, and specialized textile finishing.')}
-        </p>
-      </div>
-
-      <div class="dossier-section-block">
-        <h4>4. Manufacturing & Quality Verification</h4>
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.85rem 1.25rem; border-radius: 6px; font-size: 0.82rem; color: #166534; display: flex; align-items: flex-start; gap: 0.75rem;">
-          <div>
-            <strong>Production Backbone:</strong> Manufactured in state-of-the-art chemical production complexes in Gandhidham / Jhagadia / Dahej / Panoli, backed by Bhagwati Chemicals' 40-year quality and testing regime.
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // Update modal actions
-  if (modalRfqBtn) {
-    const isAdded = AppState.rfqBasket.some(i => i.id === product.id);
-    modalRfqBtn.textContent = isAdded ? 'Added to RFQ Tray ✓' : 'Add to RFQ Tray +';
-    modalRfqBtn.style.backgroundColor = isAdded ? '#047857' : '';
-    modalRfqBtn.onclick = () => {
-      quickAddRfq(product.id);
-      modalRfqBtn.textContent = 'Added to RFQ Tray ✓';
-      modalRfqBtn.style.backgroundColor = '#047857';
-    };
-  }
-
-  if (modalWhatsAppBtn) {
-    modalWhatsAppBtn.onclick = () => {
-      sendDirectWhatsAppQuote(product);
-    };
-  }
-
-  const backdrop = document.getElementById('productDossierModal');
-  if (backdrop) backdrop.classList.add('open');
+function resetFilters() {
+  View.cat = 'All Divisions'; View.q = ''; View.state = 'all'; View.open = null;
+  $('#q').value = '';
+  $$('#stateChips .chip').forEach(c => c.classList.toggle('on', c.dataset.state === 'all'));
+  renderDivList(); renderProducts();
+}
+function copyCas(cas, el) {
+  if (!cas || cas === 'N/A') return;
+  const done = () => { const t = el.textContent; el.textContent = 'Copied ✓'; setTimeout(() => { el.textContent = t; }, 1200); };
+  if (navigator.clipboard) navigator.clipboard.writeText(cas).then(done); else done();
 }
 
-function closeModal() {
-  const backdrop = document.getElementById('productDossierModal');
-  if (backdrop) backdrop.classList.remove('open');
-}
-
-// RFQ Basket & Drawer
-function initRfqDrawer() {
-  const drawer = document.getElementById('rfqDrawer');
-  const backdrop = document.getElementById('rfqDrawerBackdrop');
-  const openBtns = document.querySelectorAll('.open-rfq-drawer-btn');
-  const closeBtn = document.getElementById('closeRfqDrawerBtn');
-  const form = document.getElementById('rfqDrawerForm');
-
-  openBtns.forEach(b => b.addEventListener('click', openRfqDrawer));
-  if (closeBtn) closeBtn.addEventListener('click', closeRfqDrawer);
-  if (backdrop) backdrop.addEventListener('click', closeRfqDrawer);
-
-  if (form) {
-    form.addEventListener('submit', handleRfqSubmission);
-  }
-}
-
+/* ---------- RFQ drawer ---------- */
 function openRfqDrawer() {
   renderRfqItemsList();
-  const drawer = document.getElementById('rfqDrawer');
-  const backdrop = document.getElementById('rfqDrawerBackdrop');
-  if (drawer) drawer.classList.add('open');
-  if (backdrop) backdrop.style.display = 'block';
+  $('#rfqDrawer').classList.add('open'); $('#veil').classList.add('open');
 }
-
 function closeRfqDrawer() {
-  const drawer = document.getElementById('rfqDrawer');
-  const backdrop = document.getElementById('rfqDrawerBackdrop');
-  if (drawer) drawer.classList.remove('open');
-  if (backdrop) backdrop.style.display = 'none';
+  $('#rfqDrawer').classList.remove('open');
+  if (!$('#cmpModal.open')) $('#veil').classList.remove('open');
 }
-
-function quickAddRfq(id) {
-  const product = CHEMICAL_PRODUCTS.find(p => p.id === id);
-  if (!product) return;
-  const existing = AppState.rfqBasket.find(i => i.id === id);
-  if (!existing) {
-    AppState.rfqBasket.push({
-      id: product.id,
-      name: product.name,
-      cas: product.cas,
-      purity: product.purity,
-      packing: product.packing
-    });
-    saveRfqBasket();
-    renderProducts();
-  }
-  openRfqDrawer();
+function quickAddRfq(id, openDrawer) {
+  const p = CHEMICAL_PRODUCTS.find(x => x.id === id); if (!p) return;
+  const idx = AppState.rfqBasket.findIndex(i => i.id === id);
+  if (idx > -1) AppState.rfqBasket.splice(idx, 1);
+  else AppState.rfqBasket.push({ id: p.id, name: p.name, cas: p.cas, purity: p.purity, packing: p.packing });
+  saveRfqBasket();
+  if ($('#out')) renderProducts();
+  if (openDrawer) openRfqDrawer();
 }
-
 function removeRfqItem(id) {
   AppState.rfqBasket = AppState.rfqBasket.filter(i => i.id !== id);
-  saveRfqBasket();
-  renderRfqItemsList();
-  renderProducts();
+  saveRfqBasket(); renderRfqItemsList(); if ($('#out')) renderProducts();
 }
-
 function renderRfqItemsList() {
-  const container = document.getElementById('rfqSelectedItemsContainer');
-  if (!container) return;
-
-  if (AppState.rfqBasket.length === 0) {
-    container.innerHTML = `
-      <div style="padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.85rem; border: 1px dashed #cbd5e1; border-radius: 6px;">
-        No chemicals currently in your RFQ Tray.<br>
-        Browse the chemical catalog and click <strong>"RFQ +"</strong> on any product.
-      </div>
-    `;
+  const c = $('#rfqSelectedItemsContainer'); if (!c) return;
+  if (!AppState.rfqBasket.length) {
+    c.innerHTML = '<div class="rfq-empty">Your list is empty. Add chemicals from the <a href="products.html" style="color:var(--accent);font-weight:600">products page</a>.</div>';
     return;
   }
-
-  container.innerHTML = AppState.rfqBasket.map(item => `
-    <div class="rfq-selected-item">
-      <div>
-        <div class="item-name">${escapeHtml(item.name)}</div>
-        <div class="item-cas">CAS: ${escapeHtml(item.cas || 'N/A')} &bull; Grade: ${escapeHtml(item.purity || 'Commercial')}</div>
-      </div>
-      <button type="button" class="btn-remove-item" onclick="removeRfqItem('${item.id}')" title="Remove from RFQ">&times;</button>
-    </div>
-  `).join('');
+  c.innerHTML = AppState.rfqBasket.map(i => `
+    <div class="rfq-item"><div><b>${escapeHtml(i.name)}</b><small>CAS ${escapeHtml(i.cas || 'N/A')} · ${escapeHtml(i.purity || 'Commercial')}</small></div>
+    <button type="button" onclick="removeRfqItem('${i.id}')" aria-label="Remove">&times;</button></div>`).join('');
+}
+function initRfqDrawer() {
+  $$('.open-rfq').forEach(b => b.addEventListener('click', openRfqDrawer));
+  const close = $('#closeRfq'); if (close) close.addEventListener('click', closeRfqDrawer);
+  const veil = $('#veil'); if (veil) veil.addEventListener('click', () => { closeRfqDrawer(); closeCompare(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeRfqDrawer(); closeCompare(); } });
+  const form = $('#rfqDrawerForm'); if (form) form.addEventListener('submit', handleRfqSubmission);
 }
 
-// COMMERCIAL INQUIRY FORWARDING ENGINE
 function handleRfqSubmission(e) {
   e.preventDefault();
-  
-  if (AppState.rfqBasket.length === 0) {
-    alert('Please add at least one chemical to your RFQ Tray before submitting.');
-    return;
-  }
-
-  const name = document.getElementById('rfqName').value.trim();
-  const company = document.getElementById('rfqCompany').value.trim();
-  const phone = document.getElementById('rfqPhone').value.trim();
-  const email = document.getElementById('rfqEmail').value.trim();
-  const quantity = document.getElementById('rfqQuantity').value.trim();
-  const location = document.getElementById('rfqLocation').value.trim();
-  const packaging = document.getElementById('rfqPackaging').value;
-  const dispatchChannel = document.querySelector('input[name="rfqChannel"]:checked')?.value || 'whatsapp';
-  const notes = document.getElementById('rfqNotes').value.trim();
-
-  // Generate Formal B2B RFQ Reference
-  const refCode = 'BC-' + Math.floor(100000 + Math.random() * 900000);
-  const timestamp = new Date().toISOString();
-
-  const inquiryDossier = {
-    refCode,
-    timestamp,
-    name,
-    company,
-    phone,
-    email,
-    quantity,
-    location,
-    packaging,
-    notes,
+  if (!AppState.rfqBasket.length) { alert('Please add at least one chemical to your quote list.'); return; }
+  const v = id => $('#' + id).value.trim();
+  const channel = ($('input[name="rfqChannel"]:checked') || {}).value || 'whatsapp';
+  const rfq = {
+    refCode: 'BC-' + Math.floor(100000 + Math.random() * 900000),
+    timestamp: new Date().toISOString(),
+    name: v('rfqName'), company: v('rfqCompany'), phone: v('rfqPhone'), email: v('rfqEmail'),
+    quantity: v('rfqQuantity'), location: v('rfqLocation'), packaging: $('#rfqPackaging').value, notes: v('rfqNotes'),
     items: [...AppState.rfqBasket]
   };
-
-  // Save to commercial ledger registry
-  AppState.inquiryRegistry.unshift(inquiryDossier);
-  saveInquiryRegistry();
-
-  // Execute Dispatch based on user choice
-  if (dispatchChannel === 'whatsapp') {
-    dispatchWhatsAppRFQ(inquiryDossier);
-  } else if (dispatchChannel === 'email') {
-    dispatchEmailRFQ(inquiryDossier);
-  } else {
-    dispatchWhatsAppRFQ(inquiryDossier);
-    setTimeout(() => dispatchEmailRFQ(inquiryDossier), 1000);
-  }
-
-  // Show confirmation modal
-  showConfirmationSlip(inquiryDossier);
-
-  // Clear basket
-  AppState.rfqBasket = [];
-  saveRfqBasket();
-  closeRfqDrawer();
+  AppState.inquiryRegistry.unshift(rfq); saveInquiryRegistry();
+  channel === 'email' ? dispatchEmailRFQ(rfq) : dispatchWhatsAppRFQ(rfq);
+  alert('Request registered. Reference: ' + rfq.refCode + '\nOur team will get back to you shortly.');
+  AppState.rfqBasket = []; saveRfqBasket(); closeRfqDrawer(); e.target.reset();
+  if ($('#out')) renderProducts();
 }
 
 function dispatchWhatsAppRFQ(rfq) {
-  const itemsText = rfq.items.map(i => `• ${i.name} (CAS: ${i.cas}, Grade: ${i.purity})`).join('\n');
-  const text = `*FORMAL COMMERCIAL INQUIRY (RFQ)*
-*Ref No:* ${rfq.refCode}
-*Company:* Bhagwati Chemicals
-
-*Requester Details:*
-• Company: ${rfq.company || 'Not Specified'}
-• Contact Person: ${rfq.name}
-• Phone: ${rfq.phone}
-• Email: ${rfq.email}
-• Delivery Destination: ${rfq.location}
-
-*Chemical Requirements:*
-${itemsText}
-
-• Target Quantity: ${rfq.quantity}
-• Preferred Packaging: ${rfq.packaging}
-• Additional Specifications: ${rfq.notes || 'None'}
-
-_Routing: Direct Plant Commercial Sourcing_`;
-
-  const phoneDest = '919428001153'; // Primary Bhagwati Chemicals sales line
-  const url = `https://wa.me/${phoneDest}?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
+  const items = rfq.items.map(i => `• ${i.name} (CAS ${i.cas}, ${i.purity})`).join('\n');
+  const text = `*QUOTATION REQUEST*\n*Ref:* ${rfq.refCode}\n\n*Buyer*\n• Company: ${rfq.company || '-'}\n• Contact: ${rfq.name}\n• Phone: ${rfq.phone}\n• Email: ${rfq.email}\n• Delivery: ${rfq.location}\n\n*Products*\n${items}\n\n• Quantity: ${rfq.quantity}\n• Packaging: ${rfq.packaging}\n• Notes: ${rfq.notes || 'None'}`;
+  window.open('https://wa.me/919428001153?text=' + encodeURIComponent(text), '_blank');
 }
-
 function dispatchEmailRFQ(rfq) {
-  const itemsText = rfq.items.map(i => ` - ${i.name} [CAS: ${i.cas}, Grade: ${i.purity}]`).join('\n');
-  const subject = `[RFQ ${rfq.refCode}] Chemical Procurement Inquiry: ${rfq.company || rfq.name}`;
-  const body = `Attention Commercial Sourcing Desk,
-Bhagwati Chemicals
-
-Please provide a formal commercial spot quotation for the following chemical requirement:
-
-REFERENCE ID: ${rfq.refCode}
-DATE: ${new Date().toLocaleDateString()}
-
-BUYER PROFILE:
-Company: ${rfq.company || 'N/A'}
-Contact: ${rfq.name}
-Phone: ${rfq.phone}
-Email: ${rfq.email}
-Delivery Destination: ${rfq.location}
-
-PRODUCTS REQUIRED:
-${itemsText}
-
-TARGET VOLUME: ${rfq.quantity}
-PACKAGING SPECIFICATION: ${rfq.packaging}
-BUYER NOTES: ${rfq.notes || 'Please provide technical data sheet (TDS), certificate of analysis (COA), and dispatch timeline.'}
-
----
-This inquiry originated from Bhagwati Chemicals official portal.`;
-
-  const mailtoUrl = `mailto:info@bhagwatichemicals.in?cc=info@kcil.co.in&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.location.href = mailtoUrl;
+  const items = rfq.items.map(i => ` - ${i.name} [CAS ${i.cas}, ${i.purity}]`).join('\n');
+  const subject = `[RFQ ${rfq.refCode}] ${rfq.company || rfq.name}`;
+  const body = `Please share a quotation for:\n\nRef: ${rfq.refCode}\nDate: ${new Date().toLocaleDateString()}\n\nCompany: ${rfq.company || 'N/A'}\nContact: ${rfq.name}\nPhone: ${rfq.phone}\nEmail: ${rfq.email}\nDelivery: ${rfq.location}\n\nProducts:\n${items}\n\nQuantity: ${rfq.quantity}\nPackaging: ${rfq.packaging}\nNotes: ${rfq.notes || 'Please include TDS, COA and dispatch timeline.'}`;
+  window.location.href = `mailto:info@bhagwatichemicals.in?cc=info@kcil.co.in&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function sendDirectWhatsAppQuote(p) {
+  const text = `Hello Bhagwati Chemicals,\nI'd like a quote for *${p.name}* (CAS ${p.cas || 'N/A'}).\nPlease share price, MOQ and TDS.`;
+  window.open('https://wa.me/919428001153?text=' + encodeURIComponent(text), '_blank');
 }
 
-function sendDirectWhatsAppQuote(product) {
-  const text = `Hello Bhagwati Chemicals Sales Desk,
-I am interested in procuring *${product.name}* (CAS: ${product.cas || 'N/A'}, Division: ${product.primaryCategory}).
-
-Please share current commercial spot price, Minimum Order Quantity (MOQ), and TDS.`;
-  const url = `https://wa.me/919428001153?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
-}
-
-function showConfirmationSlip(rfq) {
-  alert(`RFQ Successfully Registered!\nReference ID: ${rfq.refCode}\nYour requirement has been formatted and forwarded to Bhagwati Chemicals Commercial Desk.\nOur sales engineers will contact you shortly.`);
-}
-
-// Mobile Nav toggle
-function initMobileNav() {
-  const toggle = document.getElementById('mobileNavToggle');
-  const nav = document.getElementById('mainNav');
-  if (!toggle || !nav) return;
-
-  toggle.addEventListener('click', () => {
-    nav.classList.toggle('open');
-  });
-}
-
-// Helpers
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+/* ---------- boot ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  loadInquiryRegistry(); loadRfqBasket();
+  initNav(); initScroll(); initReveal(); initCounters();
+  initRfqDrawer();
+  if (typeof CHEMICAL_PRODUCTS !== 'undefined') { initDivisionCounts(); initHeroFinder(); initProductsPage(); }
+});

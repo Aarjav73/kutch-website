@@ -1,8 +1,11 @@
 # Raw scraping HTML dumps
 data-pipeline/*.html
+data-pipeline/shots/
+data-pipeline/shoot.ps1
 
 # OS and Cache files
 __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+
